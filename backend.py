@@ -9,8 +9,6 @@ from docx import Document as DocxDocument
 from PIL import Image
 import chromadb
 from chromadb.utils import embedding_functions
-from google import genai
-from google.genai import types
 from groq import Groq
 
 # Define local directories
