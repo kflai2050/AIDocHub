@@ -1,0 +1,24 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Vector database and sqlite locking files
+chroma_db/
+*.sqlite3
+*.db
+
+# User uploads folder
+uploaded_files/
+
+# IDE / System configs
+.idea/
+.vscode/
+.gemini/
+*.log

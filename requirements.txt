@@ -1,0 +1,99 @@
+# 📄 Requirement Document: AI Document Agent with Streamlit & ChromaDB
+
+## 1. Objective
+Develop an AI agent using LangChain/Groq that allows users to upload documents in multiple formats, store them, perform semantic searches, and answer queries based on the uploaded content. The agent should also support downloading and inline display of the complete files.
+
+---
+
+## 2. Functional Requirements
+
+### 2.1 Document Upload
+- **Supported Formats:** `.txt`, `.pdf`, `.docx`, `.xls`, `.xlsx`, `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`.
+- **Upload Options:** Single or multiple file selection.
+- **Frontend:** Streamlit interface with drag-and-drop and file selector.
+- **Validation:** Ensure file type and size constraints are enforced.
+- **Workflow:** Processing starts **automatically** upon upload (no manual intervention).
+- **Cancellation:** A dynamic `🚫 Cancel Processing` button is available to interrupt indexing in-between. Once cancelled, users can click `Resume Indexing` or `Reset/Clear Uploads`.
+- **Deletion/Removal:** Removing a file from the uploader widget automatically deletes the local file, removes it from memory/frontend registry, and deletes all associated chunks from the ChromaDB vector database.
+
+
+### 2.2 Storage & Parsing
+- **Vector Database:** ChromaDB for embedding and semantic similarity search.
+- **Local Cache Fallback:** Memory fallback dictionary search if ChromaDB is unavailable.
+- **Metadata:** Store filename, type, upload timestamp, and chunk index.
+- **Excel Performance Optimizations:**
+  - XLS/XLSX files are serialized compactly row-by-row (as key-value strings) to prevent spacing overhead.
+  - Rows are grouped into chunks of **15 rows** (rather than arbitrary character slices) to limit embedding load.
+  - Indexing is capped at the first **500 rows** for speed, while the full file remains available for preview and download.
+- **Image Parsing (Vision OCR):**
+  - Uses the **`meta-llama/llama-4-scout-17b-16e-instruct`** multimodal model via the Groq API to perform high-accuracy OCR.
+  - Base64-encoded image data is transcribed and indexed in ChromaDB.
+- **PDF Parsing & OCR Fallback:** Scanned/image-only PDFs (with no digital text layer) are automatically detected, rasterized page-by-page using PyMuPDF (fitz) into high-resolution PNG images in memory, and transcribed via Groq Vision OCR to enable semantic querying of visual document attachments.
+
+### 2.3 Query Handling
+- **Input:** User enters natural language queries via Streamlit UI.
+- **Submission:** Wrapped in `st.form` to allow both clicking the `🚀 Submit Query` button and pressing the **Enter** key.
+- **Processing:**  
+  - Retrieve relevant document chunks using local ChromaDB similarity search (defaulting to the local cached `all-MiniLM-L6-v2` ONNX embedding model).  
+  - Synthesize the final answer using the **Groq API** with the `llama-3.3-70b-versatile` model.  
+- **Output:** Return synthesized answer, show source files, chunks, and similarity matching scores.
+
+### 2.4 File Access
+- **Download:** Provide options to download original files directly.
+- **Display:** Render text, structured Excel sheets (as interactive pandas DataFrames), or image renders directly in Streamlit for inline viewing.
+
+---
+
+## 3. Non-Functional Requirements
+- **Performance:** Caching and row limits ensure that document indexing is completed in seconds and query response time is < 2 seconds.
+- **Portability:** Supports local offline execution fallback for query retrieval if no API key is supplied.
+- **UI Aesthetics:** Custom glassmorphic styling, neon title gradients, Plus Jakarta Sans typography, and type-specific status badges.
+- **Default Sidebar Layout:** Sidebar is collapsed by default to maximize reading real-estate.
+
+---
+
+## 4. System Architecture
+
+### Components
+1. **Frontend (Streamlit):**
+   - File upload widget and upload registry queue.
+   - Form-based Query input box.
+   - Results display (Groq answers, source passages with matching similarity scores, file previews, download links).
+   
+2. **Backend:**
+   - File storage (local `./uploaded_files`).
+   - Groq API Client (Vision OCR for images, chat completion for answers).
+   - ChromaDB vector store (local `./chroma_db`) using ONNX embeddings.
+
+---
+
+## 5. Workflow
+
+1. **Upload Phase:**
+   - User drops files in the uploader.
+   - Files are stored in the upload directory.
+   - Processing starts automatically.
+   - Text is parsed, chunked, and indexed in ChromaDB (or Vision OCR transcribes and indexes images).
+   - Users can click "Cancel Processing" to halt indexing.
+
+2. **Query Phase:**
+   - User submits a query in the form (clicks Submit or hits Enter).
+   - ChromaDB retrieves the top similarity match chunks.
+   - Groq synthesizes the final response.
+
+3. **Access Phase:**
+   - User can download original files or click "Preview" to inspect them inline.
+
+---
+
+## 6. Sample Use Case: Student Marksheet Query
+
+### Scenario
+- **Upload:** User uploads a student’s marksheet image (`test-marksheet.jpg`).  
+- **Query:** User asks, *“What is the mark in Maths?”*  
+- **Expected Behavior:**  
+  - AI agent transcribes the image content using Groq Vision OCR.  
+  - Embeddings are indexed in ChromaDB.  
+  - Query retrieves the relevant entries containing Maths.  
+  - Groq synthesizes and responds: *“Maths: 95 marks”*.  
+  - User can download the full original marksheet image or view it inline.

@@ -1,0 +1,4 @@
+Student Name: John Smith
+Maths: 95
+Science: 88
+English: 84
