@@ -3,6 +3,7 @@ import json
 import time
 import shutil
 import pandas as pd
+import base64
 from typing import Optional, List
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
