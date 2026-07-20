@@ -1,0 +1,6 @@
+This file is a placeholder to track revert operations.
+Reverting commits:
+1. b8135860610c4420b9d113c544ba74b80fa69c85 - Import missing base64 module in backend/main.py
+2. e73cf3b95110b53f4aac18db9400a6a36e2c4657 - Migrate Streamlit frontend to Next.js + Python FastAPI hybrid architecture
+
+Target: Revert to 8afbc92c927877a79d8d433ab672b8a34567834e
